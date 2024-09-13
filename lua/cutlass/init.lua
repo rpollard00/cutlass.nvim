@@ -1,10 +1,13 @@
 local debug = require("cutlass.debug")
 local util = require("lspconfig.util")
+local async = require("lspconfig.async")
 local find_root_project = require("cutlass.rootdir").find_root_project
 
 local M = {}
 
+-- does it make sense to hold a reference to the client
 local rzls_path
+M.patterns = { "*.razor", "*.csproj", "*.cshtml", "*.sln" }
 
 local setup = function(opts)
 	vim.lsp.set_log_level("trace")
@@ -21,87 +24,83 @@ local setup = function(opts)
 	else
 		rzls_path = vim.fn.expand("~/.local/share/nvim/rzls/rzls")
 	end
+
+	vim.api.nvim_create_autocmd({ "FileType", "BufEnter" }, {
+		pattern = M.patterns,
+		callback = M.attach_client,
+	})
+end
+
+---@return vim.lsp.ClientConfig
+local get_config = function(bufname)
+	return {
+		name = "cutlass",
+		cmd = {
+			rzls_path,
+		},
+		root_dir = find_root_project({ "*.sln", "*.csproj" }, bufname, 10),
+		offset_encoding = "utf-16",
+		handlers = vim.lsp.handlers,
+	}
 end
 
 --- @return integer?
-local start_client = function()
+local get_or_init_client = function()
 	debug.log_message("Starting rzls lsp")
 
 	local bufnr = vim.api.nvim_get_current_buf()
 	local bufname = vim.api.nvim_buf_get_name(bufnr)
 
 	debug.log_message("Current bufnr " .. bufnr .. " name: " .. bufname)
-	--- @class vim.lsp.ClientConfig
-	local client_config = {
-		name = "cutlass",
-		cmd = {
-			rzls_path,
-		},
-		root_dir = find_root_project({ "*.sln", "*.csproj" }, bufname, 10),
-		-- root_dir = vim.fn.getcwd(),
-		offset_encoding = "utf-8",
-		handlers = vim.lsp.handlers,
-	}
+	local already_has_attached_client = vim.lsp.get_clients({ name = "cutlass" })
+	debug.log_message("Already attached client" .. vim.inspect(already_has_attached_client))
 
-	local client_id = vim.lsp.start_client(client_config)
+	-- return if the client is already started and attached
+	if already_has_attached_client and already_has_attached_client[1] then
+		return already_has_attached_client[1].id
+	end
+
+	local client_id = vim.lsp.start_client(get_config(bufname))
 	-- local client_id = vim.lsp.start(client_config)
-
-	local client
-
-	if client_id ~= nil then
-		debug.log_message("Client_id: " .. client_id)
-		client = vim.lsp.get_client_by_id(client_id)
-	end
-
-	-- early return if client can't be fetched
-	if not client then
-		return
-	end
-
-	-- wrap handlers with the debug handler
-	-- if debug.debug_handler then
-	-- 	debug.log_message("Will attempt to wrap handlers")
-	-- 	for method, handler in pairs(client.handlers) do
-	-- 		debug.log_message("Wrapping handler for method: " .. method)
-	-- 		-- i want to take the existing default handler and wrap it in my debug handler (which will execute the default handler)
-	-- 		client.handlers[method] = debug.debug_handler(handler)
-	-- 	end
-	-- end
-
-	-- local base_request_handler = client.request
-	-- if base_request_handler and debug.debug_request then
-	-- 	debug.log_message("Attempt to wrap the base request handler")
-	-- 	client.request = debug.debug_request(base_request_handler)
-	-- end
-
 	return client_id
 end
 
-vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
-	pattern = "*.razor",
-	callback = function()
-		local client_id = start_client()
-		if client_id then
-			debug.log_message("rzls client attached to buffer. Client_id " .. client_id)
-		else
-			debug.log_message("failed to start rzls client")
-		end
-	end,
-})
+-- Notify server about changes in configuration (dependencies)
+local notify_did_change_configuration = function(client_id)
+	local client = vim.lsp.get_client_by_id(client_id)
+
+	if not client then
+		debug.log_message("Unable to fetch client in notify_did_change_configuration")
+		return
+	end
+
+	local result = client.notify("workspace/didChangeConfiguration", {})
+
+	if not result then
+		debug.log_message("Unable to send workspace/didChangeConfiguration successfully")
+	end
+end
+
+M.get_or_init_client = get_or_init_client
+local attach_client = function()
+	local id = get_or_init_client()
+	if not id then
+		debug.log_message("Unable to attach buffer as client id is nil")
+		return
+	end
+	local bufnr = vim.api.nvim_get_current_buf()
+
+	local did_attach = vim.lsp.buf_is_attached(bufnr, id) or vim.lsp.buf_attach_client(bufnr, id)
+
+	if not did_attach then
+		debug.log_message("Failed to attach client " .. id .. " to buffer " .. bufnr)
+		return
+	end
+end
+M.attach_client = attach_client
+--
 
 -- Optional: Add key mappings for LSP functionality
-
-vim.api.nvim_create_autocmd("LspAttach", {
-	pattern = "*.razor",
-	callback = function(args)
-		debug.log_message("Attempt rzls lsp attach")
-		local client = vim.lsp.get_client_by_id(args.data.client_id)
-		local opts = { buffer = args.buf }
-		vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
-		vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
-		-- Add more key mappings as needed
-	end,
-})
 
 ------- DEBUGGING COMMANDS TODO MOVE THIS STUFF ---------
 
@@ -109,8 +108,5 @@ M.debug = debug
 M.log = debug.view_log
 M.setup = setup
 
--- vim.api.nvim_create_user_command("RestartLsp", function()
--- 	vim.lsp.stop_client
--- end, {})
 ---------------------------------------------------------
 return M

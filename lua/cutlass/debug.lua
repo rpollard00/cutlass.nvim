@@ -1,6 +1,7 @@
 local M = {}
 local rzls_log_name = "rzls_log.log"
 local log_file_path = vim.fn.stdpath("cache") .. "/" .. rzls_log_name
+local api = vim.api
 
 local log_message = function(message)
 	local log_file = io.open(log_file_path, "a")
@@ -8,6 +9,12 @@ local log_message = function(message)
 		log_file:write(os.date("%Y-%m-%d %H:%M:%S") .. " " .. message .. "\n")
 		log_file:close()
 	end
+end
+--- Writes to error buffer.
+---@param ... string Will be concatenated before being written
+local function err_message(...)
+	vim.notify(table.concat(vim.iter({ ... }):flatten():totable()), vim.log.levels.ERROR)
+	api.nvim_command("redraw")
 end
 
 ---@param base_handler function(err, result, ctx, config)
@@ -47,5 +54,6 @@ M.log_message = log_message
 M.debug_handler = debug_handler
 M.debug_request = debug_request
 M.view_log = view_log
+M.err_message = err_message
 
 return M

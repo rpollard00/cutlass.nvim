@@ -2,6 +2,7 @@ local debug = require("cutlass.debug")
 local util = require("lspconfig.util")
 local async = require("lspconfig.async")
 local find_root_project = require("cutlass.rootdir").find_root_project
+local handlers = require("cutlass.handlers")
 
 local M = {}
 
@@ -42,7 +43,16 @@ local get_config = function(bufname)
 		},
 		root_dir = find_root_project({ "*.sln", "*.csproj" }, bufname, 10),
 		offset_encoding = "utf-16",
-		handlers = vim.lsp.handlers,
+		settings = {
+			-- the keys are now correct but the values are not
+			razor = {},
+			html = {},
+			["vs.editor.razor"] = {},
+			-- "file:///Users/reesepollard/projects/dotnet/BlazorOmni",
+		},
+		handlers = vim.tbl_extend("force", vim.lsp.handlers, {
+			["workspace/configuration"] = handlers.workspace_configuration_handler,
+		}),
 	}
 end
 

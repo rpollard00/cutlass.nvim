@@ -9,6 +9,10 @@ local M = {}
 ---@param section string indicating the field of the table, e.g., "foo.bar"
 ---@return any|nil setting value read from the table, or `nil` not found
 local function lookup_section(table, section)
+	if table[section] ~= nil then
+		return table[section]
+	end
+
 	local keys = vim.split(section, ".", { plain = true }) --- @type string[]
 	return vim.tbl_get(table, unpack(keys))
 end
@@ -29,7 +33,6 @@ local workspace_configuration_handler = function(_, result, ctx)
 	for _, item in ipairs(result.items) do
 		if item.section then
 			local value = lookup_section(client.settings, item.section)
-			debug.log_message("Section: " .. item.section)
 			-- For empty sections with no explicit '' key, return settings as is
 			if value == nil and item.section == "" then
 				value = client.settings

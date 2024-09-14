@@ -45,9 +45,19 @@ local get_config = function(bufname)
 		offset_encoding = "utf-16",
 		settings = {
 			-- the keys are now correct but the values are not
-			razor = {},
-			html = {},
-			["vs.editor.razor"] = {},
+			razor = {
+				format = {
+					enable = true,
+					codeBlockBraceOnNextLine = true,
+				},
+				completion = {
+					commitElementsWithSpace = true,
+				},
+			},
+			html = {
+				autoClosingTags = false,
+			},
+			["vs.editor.razor"] = vim.empty_dict(),
 			-- "file:///Users/reesepollard/projects/dotnet/BlazorOmni",
 		},
 		handlers = vim.tbl_extend("force", vim.lsp.handlers, {

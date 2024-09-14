@@ -22,7 +22,9 @@ local setup = function(opts)
 	if opts and opts.path then
 		rzls_path = opts.path
 	else
-		rzls_path = vim.fn.expand("~/.local/share/nvim/rzls/rzls")
+		-- rzls_path = vim.fn.expand("~/.local/share/nvim/rzls/rzls")
+		-- the wrapper redirects the custom compiled rzls with stderr jsonrpc output to a log file
+		rzls_path = vim.fn.expand("/Users/reesepollard/projects/neovim/plugins/cutlass.nvim/debug/rzls_wrapper.sh")
 	end
 
 	vim.api.nvim_create_autocmd({ "FileType", "BufEnter" }, {

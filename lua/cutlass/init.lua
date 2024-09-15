@@ -3,6 +3,7 @@ local util = require("lspconfig.util")
 local async = require("lspconfig.async")
 local find_root_project = require("cutlass.rootdir").find_root_project
 local handlers = require("cutlass.handlers")
+local buf_registry = require("cutlass.buf_registry")
 
 local M = {}
 
@@ -84,8 +85,10 @@ local get_or_init_client = function()
 		return already_has_attached_client[1].id
 	end
 
-	local client_id = vim.lsp.start_client(get_config(bufname))
-	-- local client_id = vim.lsp.start(client_config)
+	local config = get_config(bufname)
+	local client_id = vim.lsp.start_client(config)
+
+	buf_registry.register(bufnr, config.root_dir)
 	return client_id
 end
 

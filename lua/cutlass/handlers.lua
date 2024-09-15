@@ -46,6 +46,23 @@ local workspace_configuration_handler = function(_, result, ctx)
 	return response
 end
 
+-- sig for handlers is function(err, result, ctx, config)
+local razor_update_html_buffer_handler = function(err, result, ctx, config)
+	debug.log_message("razor/updateHtmlBuffer fired")
+	local response = {}
+
+	return response
+end
+
+local razor_update_csharp_buffer_handler = function(err, result, ctx, config)
+	debug.log_message("razor/updateHtmlBuffer fired")
+	local response = {}
+
+	return response
+end
+
 M.workspace_configuration_handler = workspace_configuration_handler
+M.razor_update_html_buffer_handler = razor_update_html_buffer_handler
+M.razor_update_csharp_buffer_handler = razor_update_csharp_buffer_handler
 
 return M

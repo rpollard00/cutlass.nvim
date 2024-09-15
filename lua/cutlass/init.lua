@@ -62,6 +62,8 @@ local get_config = function(bufname)
 		},
 		handlers = vim.tbl_extend("force", vim.lsp.handlers, {
 			["workspace/configuration"] = handlers.workspace_configuration_handler,
+			["razor/updateHtmlBuffer"] = handlers.razor_update_html_buffer_handler,
+			["razor/updateCSharpBuffer"] = handlers.razor_update_csharp_buffer_handler,
 		}),
 	}
 end

@@ -12,7 +12,7 @@ function M.register(parent_bufnr, root_dir, html_lsp_config, csharp_lsp_config)
 	debug.log_message("Register bufnr: " .. parent_bufnr .. " root_dir: " .. root_dir)
 	local state = proj_buf.init_state(parent_bufnr, root_dir)
 	proj_buf.create_proj_buffers(state)
-	proj_buf.attach_lsps_alt(state, html_lsp_config, csharp_lsp_config)
+	proj_buf.attach_lsps(state, html_lsp_config, csharp_lsp_config)
 	registry[parent_bufnr] = state
 end
 

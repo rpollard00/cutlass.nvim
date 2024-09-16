@@ -27,35 +27,10 @@ function M.init_state(parent_bufnr, root_dir)
 	}
 end
 
----Determine filetype and attach any LSPs
----@param state ProjectedBufState
-function M.attach_lsps(state)
-	debug.log_message("outer attach lsps")
-	---@param buf integer
-	---@param root_dir string?
-	local function attach_lsp_clients(buf, root_dir)
-		debug.log_message("invoke attach lsp clients on " .. buf .. " root_dir: " .. root_dir)
-		local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf })
-
-		for _, client in ipairs(lsp.get_clients()) do
-			debug.log_message("Iterate lsp clients")
-			if client.config then
-				debug.log_message("Client config exists")
-				if client.get_language_id(buf, filetype) then
-					debug.log_message("Inner attach_lsp_clients buf_attach_client")
-					vim.lsp.buf_attach_client(buf, client.id)
-				end
-			end
-		end
-	end
-
-	attach_lsp_clients(state.proj_html_bufnr, state.root_dir)
-end
-
 ---@param state ProjectedBufState
 ---@param html_lsp_config vim.lsp.ClientConfig
 ---@param csharp_lsp_config vim.lsp.ClientConfig
-function M.attach_lsps_alt(state, html_lsp_config, csharp_lsp_config)
+function M.attach_lsps(state, html_lsp_config, csharp_lsp_config)
 	--- Attach LSP client to the buffer manually if not attached
 	---@param buf integer
 	---@param lsp_config vim.lsp.ClientConfig

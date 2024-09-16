@@ -10,16 +10,19 @@ M = {}
 -- need to figure out how the versioning works and bump it when necessary idk
 
 ---@class ProjectedBufState
+---@field bufname string -- bufname is the full path
 ---@field parent_bufnr integer
 ---@field root_dir string?
 ---@field proj_html_bufnr integer?
 ---@field proj_cs_bufnr integer?
 
 ---@param parent_bufnr integer
+---@param bufname string
 ---@param root_dir string?
 ---@return ProjectedBufState
-function M.init_state(parent_bufnr, root_dir)
+function M.init_state(parent_bufnr, bufname, root_dir)
 	return {
+		bufname = bufname,
 		parent_bufnr = parent_bufnr,
 		root_dir = root_dir,
 		proj_html_bufnr = nil,

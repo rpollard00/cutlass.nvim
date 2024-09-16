@@ -53,34 +53,26 @@ function M.attach_lsps(state)
 end
 
 ---@param state ProjectedBufState
-function M.attach_lsps_alt(state)
+---@param html_lsp_config vim.lsp.ClientConfig
+---@param csharp_lsp_config vim.lsp.ClientConfig
+function M.attach_lsps_alt(state, html_lsp_config, csharp_lsp_config)
 	--- Attach LSP client to the buffer manually if not attached
 	---@param buf integer
-	local function attach_lsp_clients(buf)
-		local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf })
-		local lsp_config = require("lspconfig")
+	---@param lsp_config vim.lsp.ClientConfig
+	local function attach_lsp_clients(buf, lsp_config)
 		debug.log_message("attach lsp clients bufnr: " .. buf)
 
 		-- Iterate over all available LSPs for the current buffer
 		local clients = vim.lsp.get_clients({ bufnr = buf })
 
 		if #clients == 0 then
-			-- No LSP clients attached, manually start the LSP client
-			local config = lsp_config[filetype] -- Assuming the LSP config is in lspconfig
-			if config then
-				debug.log_message("Manually starting LSP for buffer: " .. buf)
-				local real_buf = api.nvim_get_current_buf()
-				api.nvim_set_current_buf(buf)
-				vim.lsp.start({
-					name = config.name,
-					cmd = config.cmd,
-					root_dir = state.root_dir,
-					filetypes = { filetype },
-				})
-				api.nvim_set_current_buf(real_buf)
-			else
-				debug.log_message("No LSP config found for filetype: " .. filetype)
-			end
+			debug.log_message("Manually starting LSP for buffer: " .. buf)
+			-- reference to the real buffer
+			local real_buf = api.nvim_get_current_buf()
+			-- we need to set the active buffer to the projected buffer and then start the lsp
+			api.nvim_set_current_buf(buf)
+			vim.lsp.start(lsp_config)
+			api.nvim_set_current_buf(real_buf)
 		else
 			-- Clients already attached, log them
 			for _, client in ipairs(clients) do
@@ -93,7 +85,7 @@ function M.attach_lsps_alt(state)
 	state.root_dir = vim.fn.getcwd(vim.fn.bufwinid(state.parent_bufnr)) or state.root_dir
 
 	-- Attach LSPs to the HTML projected buffer
-	attach_lsp_clients(state.proj_html_bufnr)
+	attach_lsp_clients(state.proj_html_bufnr, html_lsp_config)
 end
 
 ---@param state ProjectedBufState

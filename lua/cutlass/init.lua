@@ -4,15 +4,42 @@ local async = require("lspconfig.async")
 local find_root_project = require("cutlass.rootdir").find_root_project
 local handlers = require("cutlass.handlers")
 local buf_registry = require("cutlass.buf_registry")
+local lspconfig = require("lspconfig")
 
 local M = {}
 
 -- does it make sense to hold a reference to the client
 local rzls_path
 M.patterns = { "*.razor", "*.csproj", "*.cshtml", "*.sln" }
+local html_lsp_config
+local csharp_lsp_config
 
-local setup = function(opts)
-	vim.lsp.set_log_level("trace")
+-- things to make configurable
+local default_config = {
+	log_level = "trace",
+	-- the wrapper redirects the custom compiled rzls with stderr jsonrpc output to a log file
+	rzls_path = "/Users/reesepollard/projects/neovim/plugins/cutlass.nvim/debug/rzls_wrapper.sh",
+	html_lsp_config = (function()
+		if lspconfig["html"] then
+			return lspconfig["html"]
+		end
+		return nil
+	end)(),
+	csharp_lsp_config = (function()
+		-- we will just try to get the config for roslyn as its the only thing i am going to test with
+		local csharp_clients = vim.lsp.get_clients({ name = "roslyn" })
+		for _, value in ipairs(csharp_clients) do
+			if value.name == "roslyn" then
+				return value.config
+			end
+		end
+		return nil
+	end)(),
+}
+
+local setup = function(user_config)
+	local config = vim.tbl_deep_extend("force", default_config, user_config or {})
+	vim.lsp.set_log_level(config.log_level)
 
 	-- neovim doesn't recognize razor files by default
 	vim.filetype.add({
@@ -21,13 +48,11 @@ local setup = function(opts)
 		},
 	})
 
-	if opts and opts.path then
-		rzls_path = opts.path
-	else
-		-- rzls_path = vim.fn.expand("~/.local/share/nvim/rzls/rzls")
-		-- the wrapper redirects the custom compiled rzls with stderr jsonrpc output to a log file
-		rzls_path = vim.fn.expand("/Users/reesepollard/projects/neovim/plugins/cutlass.nvim/debug/rzls_wrapper.sh")
-	end
+	rzls_path = vim.fn.expand(config.rzls_path)
+	-- rzls_path = vim.fn.expand("~/.local/share/nvim/rzls/rzls")
+	-- the wrapper redirects the custom compiled rzls with stderr jsonrpc output to a log file
+	html_lsp_config = config.html_lsp_config
+	csharp_lsp_config = config.csharp_lsp_config
 
 	vim.api.nvim_create_autocmd({ "FileType", "BufEnter" }, {
 		pattern = M.patterns,
@@ -88,7 +113,7 @@ local get_or_init_client = function()
 	local config = get_config(bufname)
 	local client_id = vim.lsp.start_client(config)
 
-	buf_registry.register(bufnr, config.root_dir)
+	buf_registry.register(bufnr, config.root_dir, html_lsp_config, csharp_lsp_config)
 	return client_id
 end
 

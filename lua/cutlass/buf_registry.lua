@@ -6,11 +6,13 @@ local registry = {}
 
 ---@param parent_bufnr integer
 ---@param root_dir string?
-function M.register(parent_bufnr, root_dir)
+---@param html_lsp_config vim.lsp.ClientConfig
+---@param csharp_lsp_config vim.lsp.ClientConfig
+function M.register(parent_bufnr, root_dir, html_lsp_config, csharp_lsp_config)
 	debug.log_message("Register bufnr: " .. parent_bufnr .. " root_dir: " .. root_dir)
 	local state = proj_buf.init_state(parent_bufnr, root_dir)
 	proj_buf.create_proj_buffers(state)
-	proj_buf.attach_lsps_alt(state)
+	proj_buf.attach_lsps_alt(state, html_lsp_config, csharp_lsp_config)
 	registry[parent_bufnr] = state
 end
 

@@ -103,17 +103,17 @@ local get_or_init_client = function()
 
 	debug.log_message("Current bufnr " .. bufnr .. " name: " .. bufname)
 	local already_has_attached_client = vim.lsp.get_clients({ name = "cutlass" })
-	debug.log_message("Already attached client" .. vim.inspect(already_has_attached_client))
+	-- debug.log_message("Already attached client" .. vim.inspect(already_has_attached_client))
+
+	local config = get_config(bufname)
+	buf_registry.register(bufnr, config.root_dir, html_lsp_config, csharp_lsp_config)
 
 	-- return if the client is already started and attached
 	if already_has_attached_client and already_has_attached_client[1] then
 		return already_has_attached_client[1].id
 	end
 
-	local config = get_config(bufname)
 	local client_id = vim.lsp.start_client(config)
-
-	buf_registry.register(bufnr, config.root_dir, html_lsp_config, csharp_lsp_config)
 	return client_id
 end
 

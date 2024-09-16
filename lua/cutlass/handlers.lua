@@ -46,9 +46,31 @@ local workspace_configuration_handler = function(_, result, ctx)
 	return response
 end
 
+--- format
+---
+-- {
+-- changes = { {
+--     newText = "/*~~*/ /*~~~~~~~~~~~*/\r\n/*~~*/ /*~~~~~~~~~~~~~~~~*/\r\n/*~~*/ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/\r\n/*~~*/ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/\r\n/*~~*/ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/\r\n/*~~*/ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/\r\n/*~~*/ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/\r\n/*~~*/ /*~~~~~~~~~~~~~~~*/\r\n/*~~*/ /*~~~~~~*/\r\n/*~~*/ /*~~~~~~~~~~~~~*/\r\n\r\n<Router AppAssembly=\"/*~~~~~~~~~~~~~~~~~*/\">\r\n<Found></Found>\r\n    <Found Context=\"routeData\">\r\n        <RouteView RouteData=\"/*~~~~~~*/\" DefaultLayout=\"/*~~~~~~~~~~~~~~~*/\" />\r\n        <FocusOnNavigate RouteData=\"/*~~~~~~*/\" Selector=\"h1\" />\r\n    </Found>\r\n    <NotFound>\r\n        <PageTitle>Not found</PageTitle>\r\n        <LayoutView Layout=\"/*~~~~~~~~~~~~~~~*/\">\r\n            <p role=\"alert\">Sorry, there's nothing at this address.</p>\r\n        </LayoutView>\r\n    </NotFound>\r\n</Router>\r\n<Taco>\r\n</Taco>\r\n<p>Cool html tags</p>\r\n\r\n/*~*/ ~\r\n    /*~~~~~~~~~~~~~~~~~~~*/ ~~ /**/ /*~~~~~~~*/\r\n~\r\n",
+--     span = {
+--       length = 0,
+--       start = 0
+--     }
+--   } },
+-- hostDocumentFilePath = "/Users/reesepollard/projects/dotnet/BlazorOmni/App.razor",
+-- hostDocumentVersion = 3,
+-- previousWasEmpty = true,
+-- projectKeyId = "/var/folders/h3/h02bv04d1759kh51qznnql3h0000gn/T/d7291030b0ed48f4975ac46ecb65b0eb/__MISC_RAZOR_PROJECT__/"
+-- }
 -- sig for handlers is function(err, result, ctx, config)
 local razor_update_html_buffer_handler = function(err, result, ctx, config)
 	debug.log_message("razor/updateHtmlBuffer fired")
+	-- boils down to find the parent buffer by hostDocumentFilePath in the registry
+	-- get a reference to the projected html buffer
+	-- then iterate over changes
+	-- use the span data to find where to write to the buffer and how much of the buffer it should overwrite
+	--
+	debug.log_message(vim.inspect(result))
+
 	local response = {}
 
 	return response

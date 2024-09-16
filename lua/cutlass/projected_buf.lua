@@ -60,7 +60,7 @@ function M.attach_lsps(state, html_lsp_config, csharp_lsp_config)
 	end
 
 	-- Use the root_dir from the parent buffer or fallback to the working directory
-	state.root_dir = vim.fn.getcwd(vim.fn.bufwinid(state.parent_bufnr)) or state.root_dir
+	state.root_dir = state.root_dir
 
 	-- Attach LSPs to the HTML projected buffer
 	attach_lsp_clients(state.proj_html_bufnr, html_lsp_config)
@@ -71,11 +71,18 @@ function M.create_proj_buffers(state)
 	-- Create a buffer if its not created
 	if not state.proj_html_bufnr then
 		state.proj_html_bufnr = api.nvim_create_buf(true, true)
+
 		debug.log_message("html proj buffer id: " .. state.proj_html_bufnr)
 	end
 
 	-- Set the filetypes
 	api.nvim_set_option_value("filetype", "html", { buf = state.proj_html_bufnr })
+	-- Set the fileencoding to the same as the parent
+	api.nvim_set_option_value(
+		"fileencoding",
+		api.nvim_get_option_value("fileencoding", { buf = state.parent_bufnr }),
+		{ buf = state.proj_html_bufnr }
+	)
 end
 
 -- export interface IProjectedDocument {

@@ -88,12 +88,12 @@ end
 -- Function to insert new lines into a table and shift the remaining lines
 --
 local function shift_expand_table(tbl, start_index)
-	for i = #tbl + 1, start_index, -1 do
+	for i = #tbl, start_index, -1 do
 		tbl[i + 1] = tbl[i]
 	end
 end
 
-local function insert_lines(tbl, start_index, new_lines)
+local function insert_lines(tbl, start_index, new_lines, length)
 	local shift_count = 0
 	debug.log_message("Insert lines start_index: " .. start_index)
 
@@ -101,54 +101,63 @@ local function insert_lines(tbl, start_index, new_lines)
 		local insert_position = start_index + i - 1 + shift_count
 		debug.log_message("Insert lines position: " .. insert_position)
 
-		if line == "" then
+		if length == 0 then
+			-- copy the line at the insert_position
+			-- insert the new content
+			-- shift the table
 			shift_expand_table(tbl, start_index)
-			tbl[insert_position] = ""
-		else
-			tbl[insert_position] = line
 		end
+		tbl[insert_position] = line
 	end
 end
 
+-- offset includes newline characters
+-- the offset is the offset from start of the parent buffer
 local function get_start_line_to_modify_from_offset(bufnr, offset)
 	local buffer_content = api.nvim_buf_get_lines(bufnr, 0, -1, false)
 	local total_buffer_lines = #buffer_content
 
+	-- received offset is 0 indexed and nvim starts cols at 1 so just roll with it and bump the offset by 1
+	offset = offset + 1
 	debug.log_message("Total buffer lines: " .. total_buffer_lines .. " | Target offset: " .. offset)
 
-	local current_newlines_in_offset = 0
-	debug.log_message("Current newlines in offset" .. current_newlines_in_offset)
-	for index, _ in ipairs(buffer_content) do
+	for index, line in ipairs(buffer_content) do
+		debug.log_message("Buffer line index " .. index .. ": " .. line)
+		local this_line_length = #line + 1
 		if index == #buffer_content then
 			return index
 		end
 
-		local current_offset = api.nvim_buf_get_offset(bufnr, index - 1)
-		local next_offset = api.nvim_buf_get_offset(bufnr, index)
-		current_newlines_in_offset = current_newlines_in_offset + 1
+		local current_offset = api.nvim_buf_get_offset(bufnr, index - 1) + 1
+		-- this is kind of the start of the next line yea, but what we really would liek is to get the end of the current line
+		local end_of_current_line = current_offset + this_line_length - 1
 		debug.log_message(
-			"Line " .. index .. ": lower bound offset: " .. current_offset .. ". high bound offset: " .. next_offset
+			"Line "
+			.. index
+			.. ": lower bound offset: "
+			.. current_offset
+			.. ". high bound offset: "
+			.. end_of_current_line
 		)
 
-		if offset >= current_offset and offset < next_offset then
+		if offset >= current_offset and offset <= end_of_current_line then
 			debug.log_message(
-				"Current offset of " .. offset .. " within bounds. " .. current_offset .. " to " .. next_offset
+				"Current offset of " .. offset .. " within bounds. " .. current_offset .. " to " .. end_of_current_line
 			)
 			return index
 		end
-		-- we need to shift the offset by one byte for a newline on each subsequent line
 		offset = offset - 1
 	end
 
 	return 0
 end
 
-local function insert_lines_into_buffer(bufnr, start_line, new_lines)
+local function insert_lines_into_buffer(bufnr, start_line, new_lines, length)
 	-- Get current buffer content as a table
 	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 
 	-- Insert new lines at the specified position
-	insert_lines(lines, start_line, new_lines)
+	insert_lines(lines, start_line, new_lines, length)
 
 	-- Update the buffer with the new content
 	vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
@@ -159,7 +168,7 @@ local function set_buffer_content_from_offset(bufnr, lines, start_row, length)
 
 	debug.log_message("Incremental replacement")
 	debug.log_message("Start row: " .. start_row)
-	insert_lines_into_buffer(bufnr, start_row, lines)
+	insert_lines_into_buffer(bufnr, start_row, lines, length)
 end
 
 ---@return integer

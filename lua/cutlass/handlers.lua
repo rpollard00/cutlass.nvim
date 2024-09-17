@@ -93,6 +93,20 @@ local function shift_expand_table(tbl, start_index)
 	end
 end
 
+local function transform_and_replace_buf(bufnr, change_body, change_length, offset)
+	-- account for 1 index
+	local buffer_content = api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+	local content = table.concat(buffer_content, "\r\n")
+
+	local transformed_content = content:sub(1, offset) .. change_body .. content:sub(offset + change_length + 1)
+
+	local transformed_lines = vim.split(transformed_content, "\r\n")
+
+	api.nvim_buf_set_lines(bufnr, 0, -1, false, transformed_lines)
+end
+
+M.transform_and_replace_buf = transform_and_replace_buf
 local function insert_lines(tbl, start_index, new_lines, length)
 	local shift_count = 0
 	debug.log_message("Insert lines start_index: " .. start_index)
@@ -206,20 +220,20 @@ local razor_update_html_buffer_handler = function(err, result, ctx, config)
 		local length = lookup_section(change, "span.length")
 		local start = lookup_section(change, "span.start")
 		local change_body = lookup_section(change, "newText")
-		debug.log_message("Change Length: " .. length .. " Change Start: " .. start)
-		local untrimmed_lines = vim.split(change_body, get_line_ending(change_body))
-		local lines = trim_newline(untrimmed_lines)
+		-- debug.log_message("Change Length: " .. length .. " Change Start: " .. start)
+		-- local untrimmed_lines = vim.split(change_body, get_line_ending(change_body))
+		-- local lines = trim_newline(untrimmed_lines)
 		local bufnr = registry.get_by_path(bufname).proj_html_bufnr
-		local start_row = get_start_line_to_modify_from_offset(bufnr, start)
+		-- local start_row = get_start_line_to_modify_from_offset(bufnr, start)
+		transform_and_replace_buf(bufnr, change_body, length, start)
+		-- local total_change_length = get_change_length(lines)
 
-		local total_change_length = get_change_length(lines)
-
-		if start == 0 and length == 0 and total_change_length > 0 then
-			replace_buffer_content(bufnr, lines)
-		else
-			debug.log_message("set buffer content from offset at start position" .. start)
-			set_buffer_content_from_offset(bufnr, lines, start_row, length)
-		end
+		-- if start == 0 and length == 0 and total_change_length > 0 then
+		-- 	replace_buffer_content(bufnr, lines)
+		-- else
+		-- 	debug.log_message("set buffer content from offset at start position" .. start)
+		-- 	set_buffer_content_from_offset(bufnr, lines, start_row, length)
+		-- end
 	end
 
 	local response = {}

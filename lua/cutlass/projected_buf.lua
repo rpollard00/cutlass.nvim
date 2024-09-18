@@ -14,7 +14,11 @@ M = {}
 ---@field parent_bufnr integer
 ---@field root_dir string?
 ---@field proj_html_bufnr integer?
+---@field proj_html_vers integer?
+---@field proj_html_line_ending string
 ---@field proj_cs_bufnr integer?
+---@field proj_cs_vers integer?
+---@field proj_cs_line_ending string
 
 ---@param parent_bufnr integer
 ---@param bufname string
@@ -26,7 +30,11 @@ function M.init_state(parent_bufnr, bufname, root_dir)
 		parent_bufnr = parent_bufnr,
 		root_dir = root_dir,
 		proj_html_bufnr = nil,
+		proj_html_vers = nil,
+		proj_html_line_ending = "\r\n",
 		proj_cs_bufnr = nil,
+		proj_cs_vers = nil,
+		proj_cs_line_ending = "\r\n",
 	}
 end
 

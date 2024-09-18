@@ -40,7 +40,7 @@ function M.get_by_id(bufnr)
 end
 
 ---@return ProjectedBufState
-function M.get_by_path(bufname)
+function M.get_by_name(bufname)
 	return registry_bufname[bufname]
 end
 

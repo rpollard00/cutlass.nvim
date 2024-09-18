@@ -33,7 +33,13 @@ local function transform_and_replace_buf(bufnr, changes, bufname)
 		local length = util.lookup_section(change, "span.length")
 		local offset = util.lookup_section(change, "span.start")
 		local change_body = util.lookup_section(change, "newText")
-		content = content:sub(1, offset) .. change_body .. content:sub(offset + length + 1)
+
+		-- pretty sure this is what a refresh of the full data looks like
+		if offset == 0 and length == 0 and #content > 0 then
+			content = change_body
+		else
+			content = content:sub(1, offset) .. change_body .. content:sub(offset + length + 1)
+		end
 	end
 	local transformed_lines = vim.split(content, "\r\n")
 	bump_proj_html_vers(bufname)

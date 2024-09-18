@@ -6,6 +6,7 @@ local registry = require("cutlass.buf_registry")
 local err_message = debug.err_message
 local util = require("cutlass.util")
 local html = require("cutlass.html_buf_util")
+local api = vim.api
 local M = {}
 
 local workspace_configuration_handler = function(_, result, ctx)
@@ -51,19 +52,25 @@ local razor_update_html_buffer_handler = function(err, result, ctx, config)
 	local was_empty = util.lookup_section(result, "previousWasEmpty")
 	local changes = util.lookup_section(result, "changes")
 
-	-- TODO if the hostDocumentVersion is <= our document version then we should clear our projected buffer, invoke the didChange
+	local bufnr = registry.get_by_name(bufname).parent_bufnr
+
+	if registry.get_by_name(bufname).proj_html_vers >= buf_version then
+		was_empty = true -- force line ending and sync html version
+		html.force_rzls_projected_html_refresh(bufnr)
+	end
 	-- notification and then return
 
 	-- we can set the line ending when receiving the newText the first time
 	if was_empty and #changes > 0 then
 		registry.get_by_name(bufname).proj_html_line_ending = html.get_line_ending(changes[1].newText)
+		registry.get_by_name(bufname).proj_html_vers = buf_version
 	end
 
 	debug.log_message("host_document_path: " .. bufname)
 	debug.log_message("host_document_version: " .. buf_version)
 
-	local bufnr = registry.get_by_name(bufname).proj_html_bufnr
-	html.transform_and_replace_buf(bufnr, changes, bufname)
+	local proj_html_bufnr = registry.get_by_name(bufname).proj_html_bufnr
+	html.transform_and_replace_buf(proj_html_bufnr, changes, bufname)
 
 	local response = {}
 
@@ -75,6 +82,15 @@ local razor_update_csharp_buffer_handler = function(err, result, ctx, config)
 	local response = {}
 
 	return response
+end
+
+local text_document_hover = function(err, result, ctx, config)
+	vim.lsp.buf.hover()
+end
+
+function hover()
+	local params = util.make_position_params()
+	request(ms.textDocument_hover, params)
 end
 
 M.workspace_configuration_handler = workspace_configuration_handler

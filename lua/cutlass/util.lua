@@ -12,6 +12,15 @@ local function lookup_section(table, section)
 	return vim.tbl_get(table, unpack(keys))
 end
 
+local get_cutlass_client = function()
+	local clients = vim.lsp.get_clients({ name = "cutlass" })
+
+	if clients and clients[1] then
+		return clients[1]
+	end
+end
+
 M.lookup_section = lookup_section
+M.get_cutlass_client = get_cutlass_client
 
 return M

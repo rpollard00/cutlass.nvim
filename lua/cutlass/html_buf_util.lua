@@ -40,6 +40,32 @@ local function transform_and_replace_buf(bufnr, changes, bufname)
 	api.nvim_buf_set_lines(bufnr, 0, -1, false, transformed_lines)
 end
 
+local force_rzls_projected_html_refresh = function(bufnr)
+	local client = util.get_cutlass_client()
+
+	local uri = vim.uri_from_bufnr(bufnr)
+
+	local close_params = {
+		textDocument = {
+			uri = uri,
+		},
+	}
+
+	local open_params = {
+		textDocument = {
+			uri = uri,
+			languageId = "razor",
+			version = 0,
+			text = vim.lsp._buf_get_full_text(bufnr),
+		},
+	}
+
+	client.notify("textDocument/didClose", close_params)
+	registry.reset_projected_state(bufnr)
+	client.notify("textDocument/didOpen", open_params)
+end
+
+M.force_rzls_projected_html_refresh = force_rzls_projected_html_refresh
 M.get_line_ending = get_line_ending
 M.bump_proj_html_vers = bump_proj_html_vers
 M.transform_and_replace_buf = transform_and_replace_buf

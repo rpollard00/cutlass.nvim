@@ -1,5 +1,6 @@
 local debug = require("cutlass.debug")
 local proj_buf = require("cutlass.projected_buf")
+local api = vim.api
 
 local M = {}
 local registry = {}
@@ -42,6 +43,17 @@ end
 ---@return ProjectedBufState
 function M.get_by_name(bufname)
 	return registry_bufname[bufname]
+end
+
+---@param bufnr integer
+function M.reset_projected_state(bufnr)
+	if not registry[bufnr] then
+		debug.err_message("Unable to reset state for bufnr: " .. bufnr)
+		return
+	end
+	api.nvim_buf_set_lines(registry[bufnr].proj_html_bufnr, 0, -1, false, {})
+	registry[bufnr].proj_html_vers = 0
+	registry[bufnr].proj_cs_vers = 0
 end
 
 -- TODO: handle buf rename in the registry - this should be attached to an autocommand

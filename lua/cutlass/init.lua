@@ -1,7 +1,9 @@
 local debug = require("cutlass.debug")
 local find_root_project = require("cutlass.rootdir").find_root_project
 local handlers = require("cutlass.handlers")
+local proj_handlers = require("cutlass.proj_handlers")
 local buf_registry = require("cutlass.buf_registry")
+local actions = require("cutlass.actions")
 
 local M = {}
 
@@ -26,7 +28,7 @@ local on_attach = function(_, bufnr)
 	nmap("<leader>ws", require("telescope.builtin").lsp_dynamic_workspace_symbols, "[W]orkspace [S]ymbols")
 
 	-- See `:help K` for why this keymap
-	nmap("K", handlers.hover, "Custom Hover Documentation")
+	nmap("K", actions.hover, "Custom Hover Documentation")
 	vim.api.nvim_set_keymap("i", "<C-sw>", "<cmd>lua vim.lsp.buf.hover()<CR>", { noremap = true, silent = true })
 	nmap("<C-i>", vim.lsp.buf.signature_help, "Signature Documentation")
 	vim.api.nvim_buf_create_user_command(bufnr, "Format", function(_)
@@ -120,7 +122,7 @@ local get_or_init_client = function()
 	-- debug.log_message("Already attached client" .. vim.inspect(already_has_attached_client))
 
 	local config = get_config(bufname)
-	buf_registry.register(bufnr, bufname, config.root_dir)
+	buf_registry.register(bufnr, bufname, config.root_dir, proj_handlers.handlers)
 
 	-- return if the client is already started and attached
 	if already_has_attached_client and already_has_attached_client[1] then

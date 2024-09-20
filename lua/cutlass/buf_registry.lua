@@ -1,6 +1,5 @@
 local debug = require("cutlass.debug")
 local lspconfig = require("lspconfig")
-local lsp_functions = require("cutlass.break_the_loop")
 local util = require("cutlass.util")
 local api = vim.api
 
@@ -54,6 +53,8 @@ local function create_proj_buffers(state)
 
 	-- Set the filetypes
 	api.nvim_set_option_value("filetype", "html", { buf = state.proj_html_bufnr })
+	-- Set the buffer name
+	api.nvim_buf_set_name(state.proj_html_bufnr, state.proj_html_bufname)
 	-- Set the fileencoding to the same as the parent
 	api.nvim_set_option_value(
 		"fileencoding",
@@ -103,6 +104,7 @@ end
 ---@param child_bufnr integer
 ---@return integer?
 function M.get_parent_bufnr(child_bufnr)
+	debug.log_message("Get parent bufnr for child: " .. child_bufnr)
 	for parent_bufnr, registry_entry in pairs(registry) do
 		if registry_entry.proj_html_bufnr == child_bufnr or registry_entry.proj_cs_bufnr == child_bufnr then
 			return parent_bufnr

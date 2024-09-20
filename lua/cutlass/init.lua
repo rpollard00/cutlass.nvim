@@ -1,30 +1,44 @@
 local debug = require("cutlass.debug")
-local util = require("lspconfig.util")
-local async = require("lspconfig.async")
 local find_root_project = require("cutlass.rootdir").find_root_project
 local handlers = require("cutlass.handlers")
 local buf_registry = require("cutlass.buf_registry")
-local lspconfig = require("lspconfig")
 
 local M = {}
 
 -- does it make sense to hold a reference to the client
 local rzls_path
 M.patterns = { "*.razor", "*.csproj", "*.cshtml", "*.sln" }
-local html_lsp_config
-local csharp_lsp_config
+local on_attach = function(_, bufnr)
+	debug.log_message("THE ON ATTACH INVOKED for bufnr " .. bufnr)
+	local nmap = function(keys, func, desc)
+		if desc then
+			desc = "LSP: " .. desc
+		end
+		vim.keymap.set("n", keys, func, { buffer = bufnr, desc = desc })
+	end
+	nmap("<leader>ca", vim.lsp.buf.code_action, "[C]ode [A]ction")
+	nmap("<leader>rn", vim.lsp.buf.rename, "[R]e[n]ame")
+	nmap("gd", vim.lsp.buf.definition, "[G]oto [D]efinition")
+	nmap("gr", require("telescope.builtin").lsp_references, "[G]oto [R]eferences")
+	nmap("gI", vim.lsp.buf.implementation, "[G]oto [I]mplementation")
+	nmap("<leader>D", vim.lsp.buf.type_definition, "Type [D]efinition")
+	nmap("<leader>ds", require("telescope.builtin").lsp_document_symbols, "[D]ocument [S]ymbols")
+	nmap("<leader>ws", require("telescope.builtin").lsp_dynamic_workspace_symbols, "[W]orkspace [S]ymbols")
+
+	-- See `:help K` for why this keymap
+	nmap("K", handlers.hover, "Custom Hover Documentation")
+	vim.api.nvim_set_keymap("i", "<C-sw>", "<cmd>lua vim.lsp.buf.hover()<CR>", { noremap = true, silent = true })
+	nmap("<C-i>", vim.lsp.buf.signature_help, "Signature Documentation")
+	vim.api.nvim_buf_create_user_command(bufnr, "Format", function(_)
+		vim.lsp.buf.format()
+	end, { desc = "Format current buffer with LSP" })
+end
 
 -- things to make configurable
 local default_config = {
 	log_level = "trace",
 	-- the wrapper redirects the custom compiled rzls with stderr jsonrpc output to a log file
 	rzls_path = "/Users/reesepollard/projects/neovim/plugins/cutlass.nvim/debug/rzls_wrapper.sh",
-	html_lsp_config = (function()
-		if lspconfig["html"] then
-			return lspconfig["html"]
-		end
-		return nil
-	end)(),
 	csharp_lsp_config = (function()
 		-- we will just try to get the config for roslyn as its the only thing i am going to test with
 		local csharp_clients = vim.lsp.get_clients({ name = "roslyn" })
@@ -33,7 +47,6 @@ local default_config = {
 				return value.config
 			end
 		end
-		return nil
 	end)(),
 }
 
@@ -51,7 +64,7 @@ local setup = function(user_config)
 	rzls_path = vim.fn.expand(config.rzls_path)
 	-- rzls_path = vim.fn.expand("~/.local/share/nvim/rzls/rzls")
 	-- the wrapper redirects the custom compiled rzls with stderr jsonrpc output to a log file
-	html_lsp_config = config.html_lsp_config
+
 	csharp_lsp_config = config.csharp_lsp_config
 
 	vim.api.nvim_create_autocmd({ "FileType", "BufEnter" }, {
@@ -91,6 +104,7 @@ local get_config = function(bufname)
 			["razor/updateHtmlBuffer"] = handlers.razor_update_html_buffer_handler,
 			["razor/updateCSharpBuffer"] = handlers.razor_update_csharp_buffer_handler,
 		}),
+		on_attach = on_attach,
 	}
 end
 
@@ -106,7 +120,7 @@ local get_or_init_client = function()
 	-- debug.log_message("Already attached client" .. vim.inspect(already_has_attached_client))
 
 	local config = get_config(bufname)
-	buf_registry.register(bufnr, bufname, config.root_dir, html_lsp_config, csharp_lsp_config)
+	buf_registry.register(bufnr, bufname, config.root_dir)
 
 	-- return if the client is already started and attached
 	if already_has_attached_client and already_has_attached_client[1] then

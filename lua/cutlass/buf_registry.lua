@@ -11,7 +11,7 @@ local registry_bufname = {}
 ---@param root_dir string?
 ---@param html_lsp_config vim.lsp.ClientConfig
 ---@param csharp_lsp_config vim.lsp.ClientConfig
-function M.register(parent_bufnr, bufname, root_dir, html_lsp_config, csharp_lsp_config)
+function M.register(parent_bufnr, bufname, root_dir)
 	if registry[parent_bufnr] then
 		return
 	end
@@ -19,7 +19,7 @@ function M.register(parent_bufnr, bufname, root_dir, html_lsp_config, csharp_lsp
 
 	local state = proj_buf.init_state(parent_bufnr, bufname, root_dir)
 	proj_buf.create_proj_buffers(state)
-	proj_buf.attach_lsps(state, html_lsp_config, csharp_lsp_config)
+	proj_buf.attach_lsps(state)
 	registry[parent_bufnr] = state
 	registry_bufname[bufname] = state
 end

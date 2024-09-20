@@ -1,6 +1,7 @@
 local debug = require("cutlass.debug")
 local api = vim.api
 local lsp = vim.lsp
+local lspconfig = require("lspconfig")
 M = {}
 
 -- need to be able to clear the buffer
@@ -38,14 +39,16 @@ function M.init_state(parent_bufnr, bufname, root_dir)
 	}
 end
 
+local html_hover_handler = function(err, result, ctx, config)
+	debug.log_message("hit custom html_hover handler")
+	debug.log_message(vim.inspect(result))
+end
+
 ---@param state ProjectedBufState
----@param html_lsp_config vim.lsp.ClientConfig
----@param csharp_lsp_config vim.lsp.ClientConfig
-function M.attach_lsps(state, html_lsp_config, csharp_lsp_config)
+function M.attach_lsps(state)
 	--- Attach LSP client to the buffer manually if not attached
 	---@param buf integer
-	---@param lsp_config vim.lsp.ClientConfig
-	local function attach_lsp_clients(buf, lsp_config)
+	local function attach_lsp_clients(buf)
 		debug.log_message("attach lsp clients bufnr: " .. buf)
 
 		-- Iterate over all available LSPs for the current buffer
@@ -56,8 +59,16 @@ function M.attach_lsps(state, html_lsp_config, csharp_lsp_config)
 			-- reference to the real buffer
 			local real_buf = api.nvim_get_current_buf()
 			-- we need to set the active buffer to the projected buffer and then start the lsp
+			if lspconfig["html"] then
+				lspconfig.html.setup({
+					handlers = vim.tbl_extend("force", vim.lsp.handlers, {
+						hover = html_hover_handler,
+						["textDocument/hover"] = html_hover_handler,
+					}),
+				})
+			end
 			api.nvim_set_current_buf(buf)
-			vim.lsp.start(lsp_config)
+			vim.lsp.start(lspconfig["html"])
 			api.nvim_set_current_buf(real_buf)
 		else
 			-- Clients already attached, log them
@@ -71,7 +82,7 @@ function M.attach_lsps(state, html_lsp_config, csharp_lsp_config)
 	state.root_dir = state.root_dir
 
 	-- Attach LSPs to the HTML projected buffer
-	attach_lsp_clients(state.proj_html_bufnr, html_lsp_config)
+	attach_lsp_clients(state.proj_html_bufnr)
 end
 
 ---@param state ProjectedBufState

@@ -57,4 +57,5 @@ M.handlers = {
 	hover = override_hover,
 	["textDocument/hover"] = override_hover,
 }
+
 return M

@@ -20,9 +20,11 @@ local registry_bufname = {}
 ---@field proj_html_bufnr integer?
 ---@field proj_html_vers integer
 ---@field proj_html_line_ending string
+---@field proj_html_bufname string
 ---@field proj_cs_bufnr integer?
 ---@field proj_cs_vers integer?
 ---@field proj_cs_line_ending string
+---@field proj_cs_bufname string
 
 ---@param parent_bufnr integer
 ---@param bufname string
@@ -36,9 +38,11 @@ local function init_state(parent_bufnr, bufname, root_dir)
 		proj_html_bufnr = nil,
 		proj_html_vers = 0,
 		proj_html_line_ending = "\r\n",
+		proj_html_bufname = bufname .. ".proj.html",
 		proj_cs_bufnr = nil,
 		proj_cs_vers = nil,
 		proj_cs_line_ending = "\r\n",
+		proj_cs_bufname = bufname .. ".proj.cs",
 	}
 end
 

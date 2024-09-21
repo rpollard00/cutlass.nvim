@@ -4,26 +4,12 @@ local api = vim.api
 local util = vim.lsp.util
 local M = {}
 
-local html_hover_handler = function(err, result, ctx, config)
-	local current_proj_buf = api.nvim_get_current_buf()
-	debug.log_message("Current proj buf: " .. current_proj_buf)
-
-	-- local parent_bufnr = registry.get_parent_bufnr(current_proj_buf)
-	--
-	-- if not parent_bufnr then
-	-- 	debug.log_message("Invalid parent bufnr")
-	-- 	return
-	-- end
-
-	-- override_hover(err, result, ctx, config)
-	debug.log_message("hit custom html_hover handler proj buf: " .. current_proj_buf .. " parent: " .. parent_bufnr)
-	debug.log_message(vim.inspect(result))
-end
-
-local function override_hover(_, result, ctx, config)
+local function hover(_, result, ctx, config)
 	debug.log_message("custom hover")
 	config = config or {}
 	config.focus_id = ctx.method
+	-- TODO - this check should be restored but it should use a utility method
+	-- that checks that the current buffer is the parent or child
 	-- if api.nvim_get_current_buf() ~= ctx.bufnr then
 	-- 	-- Ignore result since buffer changed. This happens for slow language servers.
 	-- 	return
@@ -54,8 +40,8 @@ local function override_hover(_, result, ctx, config)
 end
 
 M.handlers = {
-	hover = override_hover,
-	["textDocument/hover"] = override_hover,
+	hover = hover,
+	["textDocument/hover"] = hover,
 }
 
 return M

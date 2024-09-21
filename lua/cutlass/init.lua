@@ -3,7 +3,7 @@ local find_root_project = require("cutlass.rootdir").find_root_project
 local handlers = require("cutlass.handlers")
 local proj_handlers = require("cutlass.proj_handlers")
 local buf_registry = require("cutlass.buf_registry")
-local actions = require("cutlass.actions")
+local requests = require("cutlass.requests")
 
 local M = {}
 
@@ -28,7 +28,7 @@ local on_attach = function(_, bufnr)
 	nmap("<leader>ws", require("telescope.builtin").lsp_dynamic_workspace_symbols, "[W]orkspace [S]ymbols")
 
 	-- See `:help K` for why this keymap
-	nmap("K", actions.hover, "Custom Hover Documentation")
+	nmap("K", requests.hover, "Custom Hover Documentation")
 	vim.api.nvim_set_keymap("i", "<C-sw>", "<cmd>lua vim.lsp.buf.hover()<CR>", { noremap = true, silent = true })
 	nmap("<C-i>", vim.lsp.buf.signature_help, "Signature Documentation")
 	vim.api.nvim_buf_create_user_command(bufnr, "Format", function(_)

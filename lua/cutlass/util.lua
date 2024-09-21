@@ -41,10 +41,7 @@ function M.attach_lsps(state, handlers)
 			-- we need to set the active buffer to the projected buffer and then start the lsp
 			if lspconfig["html"] then
 				lspconfig.html.setup({
-					handlers = vim.tbl_extend("force", vim.lsp.handlers, {
-						hover = handlers.hover,
-						["textDocument/hover"] = handlers.hover,
-					}),
+					handlers = vim.tbl_extend("force", vim.lsp.handlers, handlers),
 				})
 			end
 			api.nvim_set_current_buf(buf)

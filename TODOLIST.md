@@ -1,5 +1,8 @@
 Current goal:
-[] Finish the POC that we can project the response to document/Hover from html to the real buffer
+[X] Fix dependency loop
+[X] Finish the POC that we can project the response to document/Hover from html to the real buffer
+[ ] CS Projected Document Support - Basic hooks wherever the html hooks are - Attach the roslyn lsp - May be workspace challenges idk
+[ ] CS Projected Document request mapping and handler reverse mapping
 
 ## Subsystems
 
@@ -14,10 +17,10 @@ Current goal:
      - Discovery and references between buffers
      - Lifecycle management of projected buffers
    - Projection functions that keep the projected buffers in sync with the main buffer
-3. LSP action distribution
-   - Custom implementation(s) of LSP client actions
+3. LSP request distribution
+   - Custom implementation(s) of LSP client requests
    - Flow:
-     1. Expected normal LSP actions
+     1. Expected normal LSP requests
      2. Take positioning from main buffer
      3. Map to the appropriate position in the projected buffer (1:1 for html, #pragma mappings in cs)
      4. Send the request to the projected buffer's lsp(s)

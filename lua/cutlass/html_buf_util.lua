@@ -67,7 +67,7 @@ local force_rzls_projected_html_refresh = function(bufnr)
 	}
 
 	client.notify("textDocument/didClose", close_params)
-	registry.reset_projected_state(bufnr)
+	registry.reset_projected_html_buf(bufnr)
 	client.notify("textDocument/didOpen", open_params)
 end
 

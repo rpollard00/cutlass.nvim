@@ -4,6 +4,7 @@ local handlers = require("cutlass.handlers")
 local proj_handlers = require("cutlass.proj_handlers")
 local buf_registry = require("cutlass.buf_registry")
 local requests = require("cutlass.requests")
+local roslyn = require("roslyn")
 
 local M = {}
 
@@ -66,8 +67,15 @@ local setup = function(user_config)
 	rzls_path = vim.fn.expand(config.rzls_path)
 	-- rzls_path = vim.fn.expand("~/.local/share/nvim/rzls/rzls")
 	-- the wrapper redirects the custom compiled rzls with stderr jsonrpc output to a log file
-
-	csharp_lsp_config = config.csharp_lsp_config
+	roslyn.setup({
+		ft = "cs",
+		opts = {
+			config = {
+				on_attach = on_attach,
+			},
+			-- your configuration comes here; leave empty for default settings
+		},
+	})
 
 	vim.api.nvim_create_autocmd({ "FileType", "BufEnter" }, {
 		pattern = M.patterns,

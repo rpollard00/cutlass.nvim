@@ -25,10 +25,10 @@ end
 
 ---
 ---@param state ProjectedBufState
-function M.attach_lsps(state, handlers)
+function M.attach_lsps(state, handlers, html_config, cs_config)
 	--- Attach LSP client to the buffer manually if not attached
 	---@param buf integer
-	local function attach_lsp_clients(buf)
+	local function attach_lsp_clients(buf, filetype, config)
 		debug.log_message("attach lsp clients bufnr: " .. buf)
 
 		-- Iterate over all available LSPs for the current buffer
@@ -39,13 +39,19 @@ function M.attach_lsps(state, handlers)
 			-- reference to the real buffer
 			local real_buf = api.nvim_get_current_buf()
 			-- we need to set the active buffer to the projected buffer and then start the lsp
-			if lspconfig["html"] then
-				lspconfig.html.setup({
+
+			-- if we provide a config, use that
+			-- if we don't provide a config then try to use lspconfig (which will attach omnisharp for cs...idk)
+			if not config and lspconfig[filetype] then
+				lspconfig[filetype].setup({
 					handlers = vim.tbl_extend("force", vim.lsp.handlers, handlers),
 				})
+				config = lspconfig[filetype]
+
+				assert(config ~= nil, "Failed to load configuration for " .. filetype)
 			end
 			api.nvim_set_current_buf(buf)
-			vim.lsp.start(lspconfig["html"])
+			vim.lsp.start(config)
 			api.nvim_set_current_buf(real_buf)
 		else
 			-- Clients already attached, log them
@@ -55,11 +61,23 @@ function M.attach_lsps(state, handlers)
 		end
 	end
 
+	local function attach_roslyn(bufnr)
+		local real_buf = api.nvim_get_current_buf()
+
+		api.nvim_set_current_buf(bufnr)
+		vim.api.nvim_exec_autocmds("BufEnter", { buffer = state.proj_cs_bufnr })
+		api.nvim_set_current_buf(real_buf)
+	end
+
 	-- Use the root_dir from the parent buffer or fallback to the working directory
 	state.root_dir = state.root_dir
 
+	-- TODO make the starting a strategy we pass in as a function
 	-- Attach LSPs to the HTML projected buffer
-	attach_lsp_clients(state.proj_html_bufnr)
+	attach_lsp_clients(state.proj_html_bufnr, "html", nil)
+	attach_roslyn(state.proj_cs_bufnr)
+
+	-- attach_lsp_clients(state.proj_cs_bufnr, "cs", {})
 end
 
 return M

@@ -55,16 +55,30 @@ local function create_proj_buffers(state)
 		debug.log_message("html proj buffer id: " .. state.proj_html_bufnr)
 	end
 
+	if not state.proj_cs_bufnr then
+		state.proj_cs_bufnr = api.nvim_create_buf(true, true)
+	end
+
 	-- Set the filetypes
 	api.nvim_set_option_value("filetype", "html", { buf = state.proj_html_bufnr })
+	api.nvim_set_option_value("filetype", "cs", { buf = state.proj_cs_bufnr })
 	-- Set the buffer name
 	api.nvim_buf_set_name(state.proj_html_bufnr, state.proj_html_bufname)
+	api.nvim_buf_set_name(state.proj_cs_bufnr, state.proj_cs_bufname)
+	--
 	-- Set the fileencoding to the same as the parent
 	api.nvim_set_option_value(
 		"fileencoding",
 		api.nvim_get_option_value("fileencoding", { buf = state.parent_bufnr }),
 		{ buf = state.proj_html_bufnr }
 	)
+	api.nvim_set_option_value(
+		"fileencoding",
+		api.nvim_get_option_value("fileencoding", { buf = state.parent_bufnr }),
+		{ buf = state.proj_cs_bufnr }
+	)
+	-- we have to fool roslyn into thinking the buffer is real
+	api.nvim_set_option_value("buftype", "", { buf = state.proj_cs_bufnr })
 end
 
 ---@param parent_bufnr integer
@@ -118,16 +132,55 @@ function M.get_parent_bufnr(child_bufnr)
 end
 
 ---@param bufnr integer
-function M.reset_projected_state(bufnr)
+function M.reset_projected_html_buf(bufnr)
 	if not registry[bufnr] then
 		debug.err_message("Unable to reset state for bufnr: " .. bufnr)
 		return
 	end
 	api.nvim_buf_set_lines(registry[bufnr].proj_html_bufnr, 0, -1, false, {})
 	registry[bufnr].proj_html_vers = 0
+end
+
+---
+---@param bufnr integer
+function M.reset_projected_cs_buf(bufnr)
+	if not registry[bufnr] then
+		debug.err_message("Unable to reset state for bufnr: " .. bufnr)
+		return
+	end
+	api.nvim_buf_set_lines(registry[bufnr].proj_cs_bufnr, 0, -1, false, {})
 	registry[bufnr].proj_cs_vers = 0
 end
 
+---
+-----@return vim.lsp.ClientConfig
+--local get_cs_config = function(bufnr)
+--	return {
+--		name = "roslyn",
+--		cmd = {
+--			rzls_path,
+--		},
+--		root_dir = registry[bufnr].root_dir,
+--		offset_encoding = "utf-16",
+--		settings = {
+--			-- the keys are now correct but the values are not
+--			razor = {
+--				format = {
+--					enable = true,
+--					codeBlockBraceOnNextLine = true,
+--				},
+--				completion = {
+--					commitElementsWithSpace = true,
+--				},
+--			},
+--			html = {
+--				autoClosingTags = false,
+--			},
+--			["vs.editor.razor"] = vim.empty_dict(),
+--			-- "file:///Users/reesepollard/projects/dotnet/BlazorOmni",
+--		},
+--	}
+--end
 --
 
 -- TODO: handle buf rename in the registry - this should be attached to an autocommand

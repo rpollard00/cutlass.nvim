@@ -5,7 +5,7 @@ local debug = require("cutlass.debug")
 local registry = require("cutlass.buf_registry")
 local err_message = debug.err_message
 local util = require("cutlass.util")
-local html = require("cutlass.html_buf_util")
+local buf_util = require("cutlass.buf_util")
 local M = {}
 
 local workspace_configuration_handler = function(_, result, ctx)
@@ -55,13 +55,13 @@ local razor_update_html_buffer_handler = function(err, result, ctx, config)
 
 	if registry.get_by_name(bufname).proj_html_vers >= buf_version then
 		was_empty = true -- force line ending and sync html version
-		html.force_rzls_projected_html_refresh(bufnr)
+		buf_util.force_rzls_projected_refresh(bufnr, "html")
 	end
 	-- notification and then return
 
 	-- we can set the line ending when receiving the newText the first time
 	if was_empty and #changes > 0 then
-		registry.get_by_name(bufname).proj_html_line_ending = html.get_line_ending(changes[1].newText)
+		registry.get_by_name(bufname).proj_html_line_ending = buf_util.get_line_ending(changes[1].newText, "html")
 		registry.get_by_name(bufname).proj_html_vers = buf_version
 	end
 
@@ -69,7 +69,7 @@ local razor_update_html_buffer_handler = function(err, result, ctx, config)
 	debug.log_message("host_document_version: " .. buf_version)
 
 	local proj_html_bufnr = registry.get_by_name(bufname).proj_html_bufnr
-	html.transform_and_replace_buf(proj_html_bufnr, changes, bufname)
+	buf_util.transform_and_replace_buf(proj_html_bufnr, changes, bufname, "html")
 
 	local response = {}
 
@@ -77,7 +77,39 @@ local razor_update_html_buffer_handler = function(err, result, ctx, config)
 end
 
 local razor_update_csharp_buffer_handler = function(err, result, ctx, config)
-	debug.log_message("razor/updateHtmlBuffer fired")
+	debug.log_message("razor/updateCSharpBuffer fired")
+	if not result then
+		debug.log_message("razor/updateCSharpBuffer result was nil")
+		return
+	end
+
+	debug.log_message(vim.inspect(util.lookup_section(result, "changes")))
+
+	local bufname = util.lookup_section(result, "hostDocumentFilePath")
+	local buf_version = util.lookup_section(result, "hostDocumentVersion")
+	local was_empty = util.lookup_section(result, "previousWasEmpty")
+	local changes = util.lookup_section(result, "changes")
+
+	local bufnr = registry.get_by_name(bufname).parent_bufnr
+
+	if registry.get_by_name(bufname).proj_cs_vers >= buf_version then
+		was_empty = true -- force line ending and sync csharp version
+		buf_util.force_rzls_projected_refresh(bufnr, "cs")
+	end
+	-- notification and then return
+
+	-- we can set the line ending when receiving the newText the first time
+	if was_empty and #changes > 0 then
+		registry.get_by_name(bufname).proj_cs_line_ending = buf_util.get_line_ending(changes[1].newText)
+		registry.get_by_name(bufname).proj_cs_vers = buf_version
+	end
+
+	debug.log_message("host_document_path: " .. bufname)
+	debug.log_message("host_document_version: " .. buf_version)
+
+	local proj_cs_bufnr = registry.get_by_name(bufname).proj_cs_bufnr
+	buf_util.transform_and_replace_buf(proj_cs_bufnr, changes, bufname, "cs")
+
 	local response = {}
 
 	return response

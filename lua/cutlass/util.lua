@@ -23,7 +23,6 @@ function M.get_cutlass_client()
 	end
 end
 
----
 ---@param state ProjectedBufState
 function M.attach_lsps(state, handlers, html_config, cs_config)
 	--- Attach LSP client to the buffer manually if not attached

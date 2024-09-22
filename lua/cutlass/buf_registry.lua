@@ -40,7 +40,7 @@ local function init_state(parent_bufnr, bufname, root_dir)
 		proj_html_line_ending = "\r\n",
 		proj_html_bufname = bufname .. ".proj.html",
 		proj_cs_bufnr = nil,
-		proj_cs_vers = nil,
+		proj_cs_vers = 0,
 		proj_cs_line_ending = "\r\n",
 		proj_cs_bufname = bufname .. ".proj.cs",
 	}
@@ -143,7 +143,7 @@ end
 
 ---
 ---@param bufnr integer
-function M.reset_projected_cs_buf(bufnr)
+function M.reset_projected_csharp_buf(bufnr)
 	if not registry[bufnr] then
 		debug.err_message("Unable to reset state for bufnr: " .. bufnr)
 		return

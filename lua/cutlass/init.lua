@@ -19,6 +19,14 @@ local on_attach = function(_, bufnr)
 		end
 		vim.keymap.set("n", keys, func, { buffer = bufnr, desc = desc })
 	end
+
+	local imap = function(keys, func, desc)
+		if desc then
+			desc = "LSP: " .. desc
+		end
+		vim.keymap.set("i", keys, func, { buffer = bufnr, desc = desc })
+	end
+
 	nmap("<leader>ca", vim.lsp.buf.code_action, "[C]ode [A]ction")
 	nmap("<leader>rn", vim.lsp.buf.rename, "[R]e[n]ame")
 	nmap("gd", vim.lsp.buf.definition, "[G]oto [D]efinition")
@@ -27,14 +35,9 @@ local on_attach = function(_, bufnr)
 	nmap("<leader>D", vim.lsp.buf.type_definition, "Type [D]efinition")
 	nmap("<leader>ds", require("telescope.builtin").lsp_document_symbols, "[D]ocument [S]ymbols")
 	nmap("<leader>ws", require("telescope.builtin").lsp_dynamic_workspace_symbols, "[W]orkspace [S]ymbols")
-
-	-- See `:help K` for why this keymap
+	imap("<C-sw>", "<cmd>lua vim.lsp.buf.hover()<CR>", "Dont know what this does")
 	nmap("K", requests.hover, "Custom Hover Documentation")
-	vim.api.nvim_set_keymap("i", "<C-sw>", "<cmd>lua vim.lsp.buf.hover()<CR>", { noremap = true, silent = true })
 	nmap("<C-i>", vim.lsp.buf.signature_help, "Signature Documentation")
-	vim.api.nvim_buf_create_user_command(bufnr, "Format", function(_)
-		vim.lsp.buf.format()
-	end, { desc = "Format current buffer with LSP" })
 end
 
 -- things to make configurable
@@ -42,15 +45,6 @@ local default_config = {
 	log_level = "trace",
 	-- the wrapper redirects the custom compiled rzls with stderr jsonrpc output to a log file
 	rzls_path = "/Users/reesepollard/projects/neovim/plugins/cutlass.nvim/debug/rzls_wrapper.sh",
-	csharp_lsp_config = (function()
-		-- we will just try to get the config for roslyn as its the only thing i am going to test with
-		local csharp_clients = vim.lsp.get_clients({ name = "roslyn" })
-		for _, value in ipairs(csharp_clients) do
-			if value.name == "roslyn" then
-				return value.config
-			end
-		end
-	end)(),
 }
 
 local setup = function(user_config)
@@ -71,9 +65,30 @@ local setup = function(user_config)
 		ft = "cs",
 		opts = {
 			config = {
-				on_attach = on_attach,
+				settings = {
+					["csharp|inlay_hints"] = {
+						csharp_enable_inlay_hints_for_implicit_object_creation = true,
+						csharp_enable_inlay_hints_for_implicit_variable_types = true,
+						csharp_enable_inlay_hints_for_lambda_parameter_types = true,
+						csharp_enable_inlay_hints_for_types = true,
+						dotnet_enable_inlay_hints_for_indexer_parameters = true,
+						dotnet_enable_inlay_hints_for_literal_parameters = true,
+						dotnet_enable_inlay_hints_for_object_creation_parameters = true,
+						dotnet_enable_inlay_hints_for_other_parameters = true,
+						dotnet_enable_inlay_hints_for_parameters = true,
+						dotnet_suppress_inlay_hints_for_parameters_that_differ_only_by_suffix = true,
+						dotnet_suppress_inlay_hints_for_parameters_that_match_argument_name = true,
+						dotnet_suppress_inlay_hints_for_parameters_that_match_method_intent = true,
+					},
+					["csharp|code_lens"] = {
+						dotnet_enable_references_code_lens = true,
+					},
+					["csharp|background_analysis"] = {
+						dotnet_analyzer_diagnostics_scope = "fullSolution",
+						dotnet_compiler_diagnostics_scope = "fullSolution",
+					},
+				},
 			},
-			-- your configuration comes here; leave empty for default settings
 		},
 	})
 

@@ -59,12 +59,16 @@ local setup = function(user_config)
 	})
 
 	rzls_path = vim.fn.expand(config.rzls_path)
+
 	-- rzls_path = vim.fn.expand("~/.local/share/nvim/rzls/rzls")
 	-- the wrapper redirects the custom compiled rzls with stderr jsonrpc output to a log file
+	-- copy the handlers table
+
 	roslyn.setup({
 		ft = "cs",
 		opts = {
 			config = {
+				handlers = proj_handlers.cs_handlers,
 				settings = {
 					["csharp|inlay_hints"] = {
 						csharp_enable_inlay_hints_for_implicit_object_creation = true,

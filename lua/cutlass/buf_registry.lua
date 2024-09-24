@@ -152,37 +152,6 @@ function M.reset_projected_csharp_buf(bufnr)
 	registry[bufnr].proj_cs_vers = 0
 end
 
----
------@return vim.lsp.ClientConfig
---local get_cs_config = function(bufnr)
---	return {
---		name = "roslyn",
---		cmd = {
---			rzls_path,
---		},
---		root_dir = registry[bufnr].root_dir,
---		offset_encoding = "utf-16",
---		settings = {
---			-- the keys are now correct but the values are not
---			razor = {
---				format = {
---					enable = true,
---					codeBlockBraceOnNextLine = true,
---				},
---				completion = {
---					commitElementsWithSpace = true,
---				},
---			},
---			html = {
---				autoClosingTags = false,
---			},
---			["vs.editor.razor"] = vim.empty_dict(),
---			-- "file:///Users/reesepollard/projects/dotnet/BlazorOmni",
---		},
---	}
---end
---
-
 -- TODO: handle buf rename in the registry - this should be attached to an autocommand
 
 return M

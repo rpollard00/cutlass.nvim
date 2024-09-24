@@ -34,17 +34,39 @@ local function make_proj_position_params()
 	return params
 end
 
+local function make_cs_position_params()
+	local params = lsp_util.make_position_params()
+	local projected_bufnr = registry.get_by_id(api.nvim_get_current_buf()).proj_cs_bufnr
+
+	if params and params.textDocument then
+		params.textDocument = lsp_util.make_text_document_params(projected_bufnr)
+	end
+
+	params.position.line = 158
+
+	return params
+end
+
 function M.hover()
 	debug.log_message("invoke custom hover request")
 	local params = make_proj_position_params()
-	debug.log_message("Position params for hover action: " .. vim.inspect(params))
+	local cs_params = make_cs_position_params()
+	debug.log_message("HTML Position params for hover action: " .. vim.inspect(params))
+	debug.log_message("CS Position params for hover action: " .. vim.inspect(cs_params))
 	local projected_bufnr = registry.get_by_id(api.nvim_get_current_buf()).proj_html_bufnr
+	local projected_cs_bufnr = registry.get_by_id(api.nvim_get_current_buf()).proj_cs_bufnr
 
 	if not projected_bufnr then
 		debug.log_message("Projected html bufnr not instantiated")
 		return
 	end
+
+	if not projected_cs_bufnr then
+		debug.log_message("Projected cs bufnr not instantiated")
+		return
+	end
 	request_proj_buf(ms.textDocument_hover, params, projected_bufnr)
+	request_proj_buf(ms.textDocument_hover, cs_params, projected_cs_bufnr)
 end
 
 return M

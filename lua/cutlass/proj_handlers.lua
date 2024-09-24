@@ -43,28 +43,38 @@ end
 local cs_base_handlers = vim.deepcopy(vim.lsp.handlers)
 
 local function cs_outer_handler(err, result, ctx, config)
-	assert(ctx.bufnr ~= nil, "csharp handler ctx bufnr was nil, this should never be nil")
-	assert(ctx.method ~= nil, "csharp handler ctx method was nil, this should never be nil")
+	debug.log_message("we hit the cs outer handler")
+	-- assert(ctx.bufnr ~= nil, "csharp handler ctx bufnr was nil, this should never be nil")
+	-- assert(ctx.method ~= nil, "csharp handler ctx method was nil, this should never be nil")
 
-	local method = ctx.method -- this is the method string
-	local bufnr = ctx.bufnr -- this is the projected buffer
+	local method = ctx.method   -- this is the method string
+	local bufnr = ctx.bufnr or nil -- this is the projected buffer
+
+	if not bufnr then
+		debug.log_message("Invoke cs outer handler method with nil bufnr: " .. method)
+		cs_base_handlers[method](err, result, ctx, config)
+		return
+	end
 
 	debug.log_message("Invoke cs outer handler method: " .. method .. " on bufnr: " .. bufnr)
+
 	if not result then
 		debug.log_message("Received nil result in handler for: " .. method)
 		return
 	end
 	-- result should have Position or Range
 	-- we just mutate it right if provided
-	if result.Position then
-		result.Position = buf_util.translate_cs_pos_to_razor(result.Position)
-	end
+	-- if result.Position then
+	-- 	result.Position = buf_util.translate_cs_pos_to_razor(result.Position)
+	-- end
 
-	if result.Range then
-		result.Range = buf_util.translate_cs_range_to_razor(result.Range)
-	end
+	-- if result.Range then
+	-- 	result.Range = buf_util.translate_cs_range_to_razor(result.Range)
+	-- end
 
-	ctx.bufnr = registry.get_parent_bufnr(ctx.bufnr)
+	if bufnr then
+		ctx.bufnr = registry.get_parent_bufnr(ctx.bufnr)
+	end
 	--
 	cs_base_handlers[method](err, result, ctx, config)
 end
@@ -78,6 +88,16 @@ local function wrap_handlers(wrapper)
 		handlers[method] = wrapper
 	end
 
+	debug.log_message(vim.inspect(handlers["textDocument/hover"]))
+
+	-- TODO figure out if I need to reverse engineer how these work for cs
+	-- Roslyn uses "force" with table deep copy (and its handlers are leftmost) so if you set these then roslyn's handling
+	-- won't work - lazy way to unset them
+	handlers["workspace/configuration"] = nil
+	handlers["workspace/semanticTokens/refresh"] = nil
+	handlers["workspace/inlayHint/refresh"] = nil
+	handlers["client/registerCapability"] = nil
+
 	return handlers
 end
 
@@ -85,6 +105,8 @@ M.handlers = {
 	hover = hover,
 	["textDocument/hover"] = hover,
 }
+
 M.cs_handlers = wrap_handlers(cs_outer_handler)
+--
 
 return M

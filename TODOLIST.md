@@ -1,7 +1,7 @@
 Current goal:
 [X] Fix dependency loop
 [X] Finish the POC that we can project the response to document/Hover from html to the real buffer
-[ ] CS Projected Document Support - Basic hooks wherever the html hooks are - Attach the roslyn lsp - May be workspace challenges idk
+[X] CS Projected Document Support - Basic hooks wherever the html hooks are - Attach the roslyn lsp - May be workspace challenges idk
 [ ] CS Projected Document request mapping and handler reverse mapping
 
 ## Subsystems
@@ -34,3 +34,23 @@ Current goal:
    - Push all projected buffer handlers through the aggregation system
    - We may not need to push the rzls handlers through the aggregation system and instead interact directly
    - Concrete implementations of handler features
+
+Two-Way Mapper
+
+Request side ->
+Build location in request function
+Line/Column or span (V mode) - check on the format here
+Translate line to find #line <num> <bufname>
+Search from end back until you find line == num or the biggest line smaller than num
+The difference between <num> and the found line is the offset for the actual position in the projected buf, i'm pretty sure, may be off by one here
+For the col, just take that directly
+Then send the lsp request with the given calculated position
+
+Handler side ->
+Its going to return the real position in the csharp document
+Move up the document until we see a #line <num> <bufname>, while keeping track of the offset
+line num + offset is the line in the real doc
+column should be direct
+
+#line 3 "/Users/reesepollard/projects/dotnet/BlazorOmni/App.razor"
+using Microsoft.AspNetCore.Components.Forms;

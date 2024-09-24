@@ -64,38 +64,18 @@ local setup = function(user_config)
 	-- the wrapper redirects the custom compiled rzls with stderr jsonrpc output to a log file
 	-- copy the handlers table
 
-	roslyn.setup({
-		ft = "cs",
-		opts = {
-			config = {
-				handlers = proj_handlers.cs_handlers,
-				settings = {
-					["csharp|inlay_hints"] = {
-						csharp_enable_inlay_hints_for_implicit_object_creation = true,
-						csharp_enable_inlay_hints_for_implicit_variable_types = true,
-						csharp_enable_inlay_hints_for_lambda_parameter_types = true,
-						csharp_enable_inlay_hints_for_types = true,
-						dotnet_enable_inlay_hints_for_indexer_parameters = true,
-						dotnet_enable_inlay_hints_for_literal_parameters = true,
-						dotnet_enable_inlay_hints_for_object_creation_parameters = true,
-						dotnet_enable_inlay_hints_for_other_parameters = true,
-						dotnet_enable_inlay_hints_for_parameters = true,
-						dotnet_suppress_inlay_hints_for_parameters_that_differ_only_by_suffix = true,
-						dotnet_suppress_inlay_hints_for_parameters_that_match_argument_name = true,
-						dotnet_suppress_inlay_hints_for_parameters_that_match_method_intent = true,
-					},
-					["csharp|code_lens"] = {
-						dotnet_enable_references_code_lens = true,
-					},
-					["csharp|background_analysis"] = {
-						dotnet_analyzer_diagnostics_scope = "fullSolution",
-						dotnet_compiler_diagnostics_scope = "fullSolution",
-					},
-				},
-			},
+	local roslyn_config = {
+		filewatching = true,
+		exe = nil,
+		---@diagnostic disable-next-line: missing-fields
+		config = {
+			on_attach = on_attach,
+			handlers = proj_handlers.cs_handlers,
 		},
-	})
-
+		choose_sln = nil,
+		broad_search = false,
+	}
+	roslyn.setup(roslyn_config)
 	vim.api.nvim_create_autocmd({ "FileType", "BufEnter" }, {
 		pattern = M.patterns,
 		callback = M.attach_client,

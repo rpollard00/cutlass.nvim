@@ -38,13 +38,13 @@ local workspace_configuration_handler = function(_, result, ctx)
 end
 
 local razor_update_html_buffer_handler = function(err, result, ctx, config)
-	debug.log_message("razor/updateHtmlBuffer fired")
+	-- debug.log_message("razor/updateHtmlBuffer fired")
 	if not result then
 		debug.log_message("razor/updateHtmlBuffer result was nil")
 		return
 	end
 
-	debug.log_message(vim.inspect(util.lookup_section(result, "changes")))
+	-- debug.log_message(vim.inspect(util.lookup_section(result, "changes")))
 
 	local bufname = util.lookup_section(result, "hostDocumentFilePath")
 	local buf_version = util.lookup_section(result, "hostDocumentVersion")
@@ -65,8 +65,8 @@ local razor_update_html_buffer_handler = function(err, result, ctx, config)
 		registry.get_by_name(bufname).proj_html_vers = buf_version
 	end
 
-	debug.log_message("host_document_path: " .. bufname)
-	debug.log_message("host_document_version: " .. buf_version)
+	-- debug.log_message("host_document_path: " .. bufname)
+	-- debug.log_message("host_document_version: " .. buf_version)
 
 	local proj_html_bufnr = registry.get_by_name(bufname).proj_html_bufnr
 	buf_util.transform_and_replace_buf(proj_html_bufnr, changes, bufname, "html")
@@ -77,13 +77,13 @@ local razor_update_html_buffer_handler = function(err, result, ctx, config)
 end
 
 local razor_update_csharp_buffer_handler = function(err, result, ctx, config)
-	debug.log_message("razor/updateCSharpBuffer fired")
+	-- debug.log_message("razor/updateCSharpBuffer fired")
 	if not result then
-		debug.log_message("razor/updateCSharpBuffer result was nil")
+		-- debug.log_message("razor/updateCSharpBuffer result was nil")
 		return
 	end
 
-	debug.log_message(vim.inspect(util.lookup_section(result, "changes")))
+	-- debug.log_message(vim.inspect(util.lookup_section(result, "changes")))
 
 	local bufname = util.lookup_section(result, "hostDocumentFilePath")
 	local buf_version = util.lookup_section(result, "hostDocumentVersion")
@@ -104,8 +104,8 @@ local razor_update_csharp_buffer_handler = function(err, result, ctx, config)
 		registry.get_by_name(bufname).proj_cs_vers = buf_version
 	end
 
-	debug.log_message("host_document_path: " .. bufname)
-	debug.log_message("host_document_version: " .. buf_version)
+	-- debug.log_message("host_document_path: " .. bufname)
+	-- debug.log_message("host_document_version: " .. buf_version)
 
 	local proj_cs_bufnr = registry.get_by_name(bufname).proj_cs_bufnr
 	buf_util.transform_and_replace_buf(proj_cs_bufnr, changes, bufname, "cs")

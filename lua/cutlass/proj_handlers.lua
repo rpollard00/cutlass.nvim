@@ -43,34 +43,41 @@ end
 local cs_base_handlers = vim.deepcopy(vim.lsp.handlers)
 
 local function cs_outer_handler(err, result, ctx, config)
-	debug.log_message("we hit the cs outer handler")
-	-- assert(ctx.bufnr ~= nil, "csharp handler ctx bufnr was nil, this should never be nil")
-	-- assert(ctx.method ~= nil, "csharp handler ctx method was nil, this should never be nil")
-
 	local method = ctx.method   -- this is the method string
 	local bufnr = ctx.bufnr or nil -- this is the projected buffer
 
-	if not bufnr then
-		debug.log_message("Invoke cs outer handler method with nil bufnr: " .. method)
+	local bufuri
+	if bufnr then
+		-- if the bufnr is a real cs buffer (NOT projected) we need to immediately call the real handler
+		---@type string
+		bufuri = vim.uri_from_bufnr(bufnr)
+	end
+	local is_projected_buf = false
+
+	-- TODO fix magic string
+	if bufnr and bufuri:sub(-9) == ".proj.cs" then
+		is_projected_buf = true
+	end
+
+	if not bufnr or not is_projected_buf then
+		-- debug.log_message("Invoke cs outer handler method with nil bufnr: " .. method)
 		cs_base_handlers[method](err, result, ctx, config)
 		return
 	end
 
-	debug.log_message("Invoke cs outer handler method: " .. method .. " on bufnr: " .. bufnr)
+	-- debug.log_message("Invoke cs outer handler method: " .. method .. " on bufnr: " .. bufnr)
 
 	if not result then
-		debug.log_message("Received nil result in handler for: " .. method)
+		-- debug.log_message("Received nil result in handler for: " .. method)
 		return
 	end
+
 	-- result should have Position or Range
 	-- we just mutate it right if provided
-	-- if result.Position then
-	-- 	result.Position = buf_util.translate_cs_pos_to_razor(result.Position)
-	-- end
-
-	-- if result.Range then
-	-- 	result.Range = buf_util.translate_cs_range_to_razor(result.Range)
-	-- end
+	-- debug.log_message("RESULT CS OUTER: " .. vim.inspect(result))
+	if result.position then
+		debug.log_message(vim.inspect(result.position))
+	end
 
 	if bufnr then
 		ctx.bufnr = registry.get_parent_bufnr(ctx.bufnr)

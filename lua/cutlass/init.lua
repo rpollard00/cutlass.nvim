@@ -3,14 +3,18 @@ local find_root_project = require("cutlass.rootdir").find_root_project
 local handlers = require("cutlass.handlers")
 local proj_handlers = require("cutlass.proj_handlers")
 local buf_registry = require("cutlass.buf_registry")
+local buf_util = require("cutlass.buf_util")
 local requests = require("cutlass.requests")
 local roslyn = require("roslyn")
+local api = vim.api
 
 local M = {}
 
--- does it make sense to hold a reference to the client
 local rzls_path
-M.patterns = { "*.razor", "*.csproj", "*.cshtml", "*.sln" }
+-- TODO - we need to pull on_attach out of here and instead provide hooks for the user
+-- to bind to the razor intercept actions in their own on_attach
+-- M.patterns = { "*.razor", "*.csproj", "*.cshtml", "*.sln" }
+M.patterns = { "*.razor", "*.cshtml" }
 local on_attach = function(_, bufnr)
 	debug.log_message("THE ON ATTACH INVOKED for bufnr " .. bufnr)
 	local nmap = function(keys, func, desc)
@@ -20,6 +24,22 @@ local on_attach = function(_, bufnr)
 		vim.keymap.set("n", keys, func, { buffer = bufnr, desc = desc })
 	end
 
+	local nmap_with_razor_intercept = function(keys, razor_func, default_func, desc)
+		if desc then
+			desc = "LSP: " .. desc
+		end
+
+		local func_intercepted = function(...)
+			local this_bufnr = api.nvim_get_current_buf()
+			if buf_util.is_razor_buffer(this_bufnr) then
+				return razor_func(...)
+			end
+
+			return default_func(...)
+		end
+		vim.keymap.set("n", keys, func_intercepted, { buffer = bufnr, desc = desc })
+	end
+
 	local imap = function(keys, func, desc)
 		if desc then
 			desc = "LSP: " .. desc
@@ -27,17 +47,33 @@ local on_attach = function(_, bufnr)
 		vim.keymap.set("i", keys, func, { buffer = bufnr, desc = desc })
 	end
 
-	nmap("<leader>ca", vim.lsp.buf.code_action, "[C]ode [A]ction")
-	nmap("<leader>rn", vim.lsp.buf.rename, "[R]e[n]ame")
-	nmap("gd", vim.lsp.buf.definition, "[G]oto [D]efinition")
-	nmap("gr", require("telescope.builtin").lsp_references, "[G]oto [R]eferences")
-	nmap("gI", vim.lsp.buf.implementation, "[G]oto [I]mplementation")
-	nmap("<leader>D", vim.lsp.buf.type_definition, "Type [D]efinition")
-	nmap("<leader>ds", require("telescope.builtin").lsp_document_symbols, "[D]ocument [S]ymbols")
-	nmap("<leader>ws", require("telescope.builtin").lsp_dynamic_workspace_symbols, "[W]orkspace [S]ymbols")
+	nmap_with_razor_intercept("<leader>ca", requests.code_action, vim.lsp.buf.code_action, "[C]ode [A]ction")
+	nmap_with_razor_intercept("<leader>rn", requests.rename, vim.lsp.buf.rename, "[R]e[n]ame")
+	nmap_with_razor_intercept("gd", requests.definition, vim.lsp.buf.definition, "[G]oto [D]efinition")
+	-- TODO SEE IF THIS ONE (or any of the telescope ones) ARE NECESSARY
+	nmap_with_razor_intercept(
+		"gr",
+		requests.lsp_references,
+		require("telescope.builtin").lsp_references,
+		"[G]oto [R]eferences"
+	)
+	nmap_with_razor_intercept("gI", requests.implementation, vim.lsp.buf.implementation, "[G]oto [I]mplementation")
+	nmap_with_razor_intercept("<leader>D", requests.type_definition, vim.lsp.buf.type_definition, "Type [D]efinition")
+	nmap_with_razor_intercept(
+		"<leader>ds",
+		requests.lsp_document_symbols,
+		require("telescope.builtin").lsp_document_symbols,
+		"[D]ocument [S]ymbols"
+	)
+	nmap_with_razor_intercept(
+		"<leader>ws",
+		requests.lsp_dynamic_workspace_symbols,
+		require("telescope.builtin").lsp_dynamic_workspace_symbols,
+		"[W]orkspace [S]ymbols"
+	)
+	nmap_with_razor_intercept("K", requests.hover, vim.lsp.buf.hover, "Custom Hover Documentation")
+	nmap_with_razor_intercept("<C-i>", requests.signature_help, vim.lsp.buf.signature_help, "Signature Documentation")
 	imap("<C-sw>", "<cmd>lua vim.lsp.buf.hover()<CR>", "Dont know what this does")
-	nmap("K", requests.hover, "Custom Hover Documentation")
-	nmap("<C-i>", vim.lsp.buf.signature_help, "Signature Documentation")
 end
 
 -- things to make configurable
